@@ -60,6 +60,11 @@ export class ClusterLayer extends maptalks.VectorLayer {
             const renderer = this._getRenderer();
             if (renderer) {
                 renderer.render();
+                // 更新文字，确保效果和初始化一样；
+                if(conf['textSymbol']){
+                    renderer._clusterNeedRedraw = true;
+                    renderer.draw();
+                }
             }
         }
         return this;
@@ -135,17 +140,19 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._animated = true;
         this._refreshStyle();
         this._clusterNeedRedraw = true;
+        this._symbolResourceChecked = {};
     }
 
     checkResources() {
         const symbol = this.layer.options['symbol'] || defaultSymbol;
         const resources = super.checkResources.apply(this, arguments);
-        if (symbol !== this._symbolResourceChecked) {
+        // 确保markerFile资源被请求
+        if (symbol.markerFile !== this._symbolResourceChecked.markerFile) {
             const res = maptalks.Util.getExternalResources(symbol, true);
             if (res) {
                 resources.push.apply(resources, res);
             }
-            this._symbolResourceChecked = symbol;
+            this._symbolResourceChecked = JSON.parse(JSON.stringify(symbol));
         }
         return resources;
     }
